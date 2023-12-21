@@ -280,7 +280,7 @@ export const updateAccountDetails = async (req, res) => {
     const id = req.user?._id;
 
     //updating account details
-    const user =await User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       id,
       { $set: { fullName, email } },
       { new: true }
@@ -293,6 +293,76 @@ export const updateAccountDetails = async (req, res) => {
   } catch (error) {
     throw new ApiError(
       error?.message || "something went wrong while updating account details"
+    );
+  }
+};
+
+export const updateUserAvatar = async (req, res) => {
+  try {
+    //fetching avatar file path from req.file
+    const avatarLocalPath = req.file?.path;
+    if (!avatarLocalPath) {
+      throw new ApiError(400, "avatar file is required");
+    }
+
+    //uploading file on cloudinary
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    if (!avatar.url) {
+      throw new ApiError(400, "error while uploading avatar file");
+    }
+
+    //fetching user id from req.user
+    const id = req.user?._id;
+
+    //updating user avatar
+    const user = await User.findByIdAndUpdate(
+      id,
+      { $set: { avatar: avatar.url } },
+      { new: true }
+    ).select("-password -refreshToken");
+
+    //sending response
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "avatar file updated successfully"));
+  } catch (error) {
+    throw new ApiError(
+      error?.message || "something went wrong while updating user avatar"
+    );
+  }
+};
+
+export const updateUserCoverImage = async (req, res) => {
+  try {
+    //fetching avatar file path from req.file
+    const coverImageLocalPath = req.file?.path;
+    if (!coverImageLocalPath) {
+      throw new ApiError(400, "avatar file is required");
+    }
+
+    //uploading file on cloudinary
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+    if (!coverImage.url) {
+      throw new ApiError(400, "error while uploading avatar file");
+    }
+
+    //fetching user id from req.user
+    const id = req.user?._id;
+
+    //updating user avatar
+    const user = await User.findByIdAndUpdate(
+      id,
+      { $set: { coverImage: coverImage.url } },
+      { new: true }
+    ).select("-password -refreshToken");
+
+    //sending response
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "cover image file updated successfully"));
+  } catch (error) {
+    throw new ApiError(
+      error?.message || "something went wrong while updating user cover image"
     );
   }
 };
