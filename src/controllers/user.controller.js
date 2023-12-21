@@ -233,7 +233,7 @@ export const changeCurrentPassword = async (req, res) => {
     //fetching user id from req.user
     const id = req.user?._id;
     const user = await User.findById(id);
-    const isPasswordValid =await user.isPasswordCorrect(oldPassword);
+    const isPasswordValid = await user.isPasswordCorrect(oldPassword);
     if (!isPasswordValid) {
       throw new ApiError(400, "invalid old password");
     }
@@ -250,6 +250,49 @@ export const changeCurrentPassword = async (req, res) => {
     throw new ApiError(
       400,
       error?.message || "something went wrong while changing password"
+    );
+  }
+};
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    //sending response
+    return res
+      .status(200)
+      .json(new ApiResponse(200, req.user, "user fetched successfully"));
+  } catch (error) {
+    throw new ApiError(
+      40,
+      error?.message || "something went wrong while fetching current user"
+    );
+  }
+};
+
+export const updateAccountDetails = async (req, res) => {
+  try {
+    //fetching data from req.body
+    const { fullName, email } = req.body;
+    if (!fullName || !email) {
+      throw new ApiError(400, "all fields required");
+    }
+
+    //fetching user id from req.user
+    const id = req.user?._id;
+
+    //updating account details
+    const user =await User.findByIdAndUpdate(
+      id,
+      { $set: { fullName, email } },
+      { new: true }
+    ).select("-password -refreshToken");
+
+    //sending response
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "account details updated successfully"));
+  } catch (error) {
+    throw new ApiError(
+      error?.message || "something went wrong while updating account details"
     );
   }
 };
