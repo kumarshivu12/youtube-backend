@@ -21,7 +21,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
     const refreshToken = user.generateRefreshToken();
 
     user.refreshToken = refreshToken;
-    user.save({ validateBeforeSave: false });
+    await user.save({ validateBeforeSave: false });
 
     //returning access and refresh tokens
     return { accessToken, refreshToken };
@@ -218,6 +218,38 @@ export const refreshAccessToken = async (req, res) => {
     throw new ApiError(
       400,
       error?.message || "something went wrong while refreshing access token"
+    );
+  }
+};
+
+export const changeCurrentPassword = async (req, res) => {
+  try {
+    //fetching data from req.body
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      throw new ApiError(400, "all fields required");
+    }
+
+    //fetching user id from req.user
+    const id = req.user?._id;
+    const user = await User.findById(id);
+    const isPasswordValid =await user.isPasswordCorrect(oldPassword);
+    if (!isPasswordValid) {
+      throw new ApiError(400, "invalid old password");
+    }
+
+    //saving new password
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    //sending response
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "password changed successfully"));
+  } catch (error) {
+    throw new ApiError(
+      400,
+      error?.message || "something went wrong while changing password"
     );
   }
 };
