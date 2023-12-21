@@ -2,6 +2,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 //setting up cookies options
 const options = {
@@ -150,12 +151,17 @@ export const loginUser = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
   try {
+    //getting user data from req.user
     const id = req.user._id;
+
+    //setting refresh token as null
     await User.findByIdAndUpdate(
       id,
       { $set: { refreshToken: null } },
       { new: true }
     );
+
+    //sending response
     return res
       .status(200)
       .clearCookie("accessToken", options)
@@ -165,6 +171,53 @@ export const logoutUser = async (req, res) => {
     throw new ApiError(
       400,
       error?.message || "something went wrong while logging out user"
+    );
+  }
+};
+
+export const refreshAccessToken = async (req, res) => {
+  try {
+    //fetching incoming refresh token
+    const incomingRefreshToken =
+      req.cookies?.refreshToken || req.body.refreshToken;
+    if (!incomingRefreshToken) {
+      throw new ApiError(401, "unauthorized request");
+    }
+    //decoding refresh token
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    //getting user data from database
+    const user = await User.findById(decodedToken._id);
+    if (!user) {
+      throw new ApiError(401, "unauthorized user");
+    }
+    if (user.refreshToken !== incomingRefreshToken) {
+      throw new ApiError(400, "refresh token expired or used");
+    }
+
+    //getting new access and refresh tokens
+    const { newAccessToken, newRefreshToken } =
+      await generateAccessAndRefreshTokens(user._id);
+
+    //sending response
+    return res
+      .status(200)
+      .cookie("accessToken", newAccessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken: newAccessToken, refreshToken: newRefreshToken },
+          "access token refreshed"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(
+      400,
+      error?.message || "something went wrong while refreshing access token"
     );
   }
 };
