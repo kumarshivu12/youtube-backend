@@ -1,8 +1,6 @@
-import fs from "fs";
 import { v2 as cloudinary } from "cloudinary";
-import { ApiError } from "../utils/ApiError.js";
+import fs from "fs";
 
-//configuring cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -11,8 +9,9 @@ cloudinary.config({
 
 export const uploadOnCloudinary = async (localFilePath) => {
   try {
+    console.log(localFilePath);
     if (!localFilePath) {
-      return null;
+      response.status(400), "avatar local file path is missing";
     }
 
     //upload files on cloudinary
@@ -28,10 +27,6 @@ export const uploadOnCloudinary = async (localFilePath) => {
   } catch (error) {
     //deleting file from server(local...)
     fs.unlinkSync(localFilePath);
-    throw new ApiError(
-      400,
-      error?.message ||
-        "something went wrong while uploading file on cloudinary"
-    );
+    res.status(400, "something went wrong while uploading file on cloudinary");
   }
 };
