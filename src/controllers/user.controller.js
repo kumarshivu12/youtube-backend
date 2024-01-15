@@ -503,6 +503,9 @@ export const getWatchHistory = async (req, res) => {
         },
       },
     ]);
+    if (!watchHistory?.length) {
+      throw new ApiError(400, "watch history doesn't exist");
+    }
 
     //sending response
     return res
