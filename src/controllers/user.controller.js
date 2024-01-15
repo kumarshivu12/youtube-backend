@@ -3,6 +3,7 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 //setting up cookies options
 const options = {
@@ -359,10 +360,164 @@ export const updateUserCoverImage = async (req, res) => {
     //sending response
     return res
       .status(200)
-      .json(new ApiResponse(200, user, "cover image file updated successfully"));
+      .json(
+        new ApiResponse(200, user, "cover image file updated successfully")
+      );
   } catch (error) {
     throw new ApiError(
       error?.message || "something went wrong while updating user cover image"
+    );
+  }
+};
+
+export const getUserChannelProfile = async (req, res) => {
+  try {
+    //fetching data from req.params
+    const { username } = req.params;
+    //fetching data from req.user
+    const { userId } = req.user;
+    if (!username.trim()) {
+      throw new ApiError(400, "username is missing");
+    }
+
+    //getting channel profile
+    const channelProfile = await User.aggregate([
+      {
+        $match: {
+          username: username.toLowerCase(),
+        },
+      },
+      {
+        $lookup: {
+          from: "subscriptions",
+          localField: "_id",
+          foreignField: "channel",
+          as: "subscribers",
+        },
+      },
+      {
+        $lookup: {
+          from: "subscriptions",
+          localField: "_id",
+          foreignField: "subscriber",
+          as: "subscribedTo",
+        },
+      },
+      {
+        $addFields: {
+          subscribersCount: {
+            $size: "$subscribers",
+          },
+          channelSubscriberToCount: {
+            $size: "$subscribedTo",
+          },
+          isSubscribed: {
+            $cond: {
+              if: {
+                $in: [userId, "$subscribers.subscriber"],
+              },
+              then: true,
+              else: false,
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          fullName: 1,
+          userName: 1,
+          email: 1,
+          avatar: 1,
+          coverImage: 1,
+          subcribersCount: 1,
+          channelsSubscribedToCount: 1,
+          isSubscribed: 1,
+        },
+      },
+    ]);
+    if (!channelProfile?.length) {
+      throw new ApiError(400, "channel doesn't exists");
+    }
+
+    //sending response
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          channelProfile[0],
+          "channel profile fetched successfully"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(
+      400,
+      error?.message ||
+        "something went wrong while getting user channel profile"
+    );
+  }
+};
+
+export const getWatchHistory = async (req, res) => {
+  try {
+    //fetching data from req.user
+    const { userId } = req.user;
+
+    //getting watch history
+    const watchHistory = await User.aggregate([
+      {
+        $match: mongoose.Types.ObjectId(userId),
+      },
+      {
+        $lookup: {
+          from: "videos",
+          localField: "video",
+          foreignField: "_id",
+          as: "watchHistory",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                  {
+                    $project: {
+                      username: 1,
+                      fullName: 1,
+                      avatar: 1,
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              $addFields: {
+                owner: {
+                  $first: "$owner",
+                },
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    //sending response
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          watchHistory[0].watchHistory,
+          "watch history featched successfully"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(
+      400,
+      error?.message || "something went wrong while getting watch history"
     );
   }
 };
