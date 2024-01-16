@@ -153,7 +153,7 @@ export const publishAVideo = async (req, res) => {
     //fetching data from req.body
     const { title, description } = req.body;
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
     //fetching data from req.files
     const videoFileLocalPath = req.files?.videoFile[0].path;
     const thumbnailLocalPath = req.files?.thumbnail[0].path;
@@ -209,7 +209,7 @@ export const updateVideo = async (req, res) => {
     //fetching data from req.params
     const { videoId } = req.params;
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
     //fetching data from req.body
     const { title, description } = req.body;
     if (!title.trim() && !description.trim()) {
@@ -275,7 +275,7 @@ export const deleteVideo = async (req, res) => {
     //fetching video id from req.params
     const { videoId } = req.params;
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
     if (!videoId.trim() || !isValidObjectId(videoId)) {
       throw new ApiError(400, "video id is invalid !");
     }
@@ -309,7 +309,7 @@ export const togglePublishStatus = async (req, res) => {
     //fetching video id from req.params
     const { videoId } = req.params;
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
     if (!videoId.trim() || !isValidObjectId(videoId)) {
       throw new ApiError(400, "video id is invalid !");
     }

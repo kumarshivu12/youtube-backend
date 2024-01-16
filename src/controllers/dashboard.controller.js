@@ -8,7 +8,7 @@ export const getChannelStats = async (req, res) => {
   // Get the channel stats like total video views, total subscribers, total videos, total likes etc.
   try {
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
 
     //getting video stats
     const videoStats = await Video.aggregate([
@@ -102,7 +102,7 @@ export const getChannelStats = async (req, res) => {
 export const getChannelVideos = async (req, res) => {
   try {
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
 
     //getting channel videos
     const channelVideos = await Video.aggregate([

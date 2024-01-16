@@ -134,7 +134,7 @@ export const toggleSubscription = async (req, res) => {
     //fetching channel id from req.params
     const { channelId } = req.params;
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
     if (!channelId.trim() || !isValidObjectId(channelId)) {
       throw new ApiError(400, "invalid subscriber id");
     }

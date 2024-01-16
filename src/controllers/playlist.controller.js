@@ -9,7 +9,7 @@ export const createPlaylist = async (req, res) => {
     //fetching data from req.body
     const { name, description } = req.body;
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
     if (!name.trim() || !description.trim()) {
       throw new ApiError(400, "name and description required");
     }
@@ -51,7 +51,7 @@ export const updatePlaylist = async (req, res) => {
     //fetching data from req.params
     const { playlistId } = req.params;
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
     //fetching data from req.body
     const { name, description } = req.body;
     if (!name.trim() || !description.trim()) {
@@ -103,7 +103,7 @@ export const deletePlaylist = async (req, res) => {
     //fetching data from req.params
     const { playlistId } = req.params;
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
     if (!playlistId.trim() || !isValidObjectId(playlistId)) {
       throw new ApiError(400, "playlist id is invalid");
     }

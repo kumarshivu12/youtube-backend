@@ -375,7 +375,7 @@ export const getUserChannelProfile = async (req, res) => {
     //fetching data from req.params
     const { username } = req.params;
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
     if (!username.trim()) {
       throw new ApiError(400, "username is missing");
     }
@@ -461,7 +461,7 @@ export const getUserChannelProfile = async (req, res) => {
 export const getWatchHistory = async (req, res) => {
   try {
     //fetching data from req.user
-    const { userId } = req.user;
+    const userId = req.user?._id;
 
     //getting watch history
     const watchHistory = await User.aggregate([
